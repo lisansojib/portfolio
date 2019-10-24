@@ -23,6 +23,7 @@ namespace Infrastructure.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
+
             }
         }
 

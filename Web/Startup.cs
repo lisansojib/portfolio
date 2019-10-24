@@ -1,15 +1,24 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Web.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using ApplicationCore.Interfaces.Repositories;
+using ApplicationCore.Interfaces.Logging;
+using ApplicationCore.Interfaces.Services;
+using Infrastructure.Services;
+using Infrastructure.Logging;
+using Infrastructure.Data.Repositories;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Net.Mime;
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Web
 {
@@ -22,18 +31,89 @@ namespace Web
 
         public IConfiguration Configuration { get; }
 
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+            // use in-memory database
+            //ConfigureInMemoryDatabases(services);
+
+            // use real database
+            ConfigureProductionServices(services);
+        }
+
+        public void ConfigureProductionServices(IServiceCollection services)
+        {
+            // use real database
+            // https://www.microsoft.com/en-us/download/details.aspx?id=54284
+            services.AddDbContext<AppDbContext>(c =>
+                c.UseSqlServer(Configuration.GetConnectionString("DbConnection")));
+
+            ConfigureServices(services);
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            ConfigureCookieSettings(services);
+
+            services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
+
+            services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+            services.AddTransient<IEmailSender, EmailSender>();
+
+            services.AddMemoryCache();
+
             services.AddControllers();
+
+            services.AddHttpContextAccessor();
+
+            services.AddHealthChecks()
+                .AddCheck<HomePageHealthCheck>("home_page_health_check")
+                .AddCheck<ApiHealthCheck>("api_health_check");
+        }
+
+        private static void ConfigureCookieSettings(IServiceCollection services)
+        {
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            //app.UseDeveloperExceptionPage();
+            app.UseHealthChecks("/health",
+                new HealthCheckOptions
+                {
+                    ResponseWriter = async (context, report) =>
+                    {
+                        var result = JsonConvert.SerializeObject(
+                            new
+                            {
+                                status = report.Status.ToString(),
+                                errors = report.Entries.Select(e => new
+                                {
+                                    key = e.Key,
+                                    value = Enum.GetName(typeof(HealthStatus), e.Value.Status)
+                                })
+                            });
+                        context.Response.ContentType = MediaTypeNames.Application.Json;
+                        await context.Response.WriteAsync(result);
+                    }
+                });
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                //app.UseDatabaseErrorPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
             }
 
             app.UseHttpsRedirection();
