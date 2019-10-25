@@ -20,6 +20,8 @@ using System.Net.Mime;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using AutoMapper;
+using Web.Mapping;
 
 namespace Web
 {
@@ -62,6 +64,8 @@ namespace Web
             services.AddTransient<IEmailSender, EmailSender>();
 
             services.AddMemoryCache();
+
+            services.AddAutoMapper(typeof(DomainToViewModelMappingProfile), typeof(ViewModelToDomainMappingProfile));
 
             services.AddControllers();
 
