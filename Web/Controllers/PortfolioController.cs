@@ -13,6 +13,7 @@ namespace Web.Controllers
             _projectRepository = projectRepository;
         }
 
+        [HttpGet]
         public IActionResult Get()
         {
             var response = new string[] { "Hello", "World" };
