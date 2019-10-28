@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace ApplicationCore.Entities.Portfolio
 {
-    public class Projects : BaseEntity
+    public class Project : BaseEntity
     {
-        public Projects()
+        public Project()
         {
-            ProjectClients = new HashSet<ProjectClients>();
-            ProjectImages = new HashSet<ProjectImages>();
+            ProjectClients = new HashSet<ProjectClient>();
+            ProjectImages = new HashSet<ProjectImage>();
         }
 
         public string Title { get; set; }
@@ -20,7 +20,7 @@ namespace ApplicationCore.Entities.Portfolio
         public DateTime? UpdatedOn { get; set; }
         public DateTime? UpdatedBy { get; set; }
 
-        public virtual ICollection<ProjectClients> ProjectClients { get; set; }
-        public virtual ICollection<ProjectImages> ProjectImages { get; set; }
+        public virtual ICollection<ProjectClient> ProjectClients { get; set; }
+        public virtual ICollection<ProjectImage> ProjectImages { get; set; }
     }
 }

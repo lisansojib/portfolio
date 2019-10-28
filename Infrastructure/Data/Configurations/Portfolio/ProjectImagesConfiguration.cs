@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Configurations.Portfolio
 {
-    public class ProjectImagesConfiguration : IEntityTypeConfiguration<ProjectImages>
+    public class ProjectImagesConfiguration : IEntityTypeConfiguration<ProjectImage>
     {
-        public void Configure(EntityTypeBuilder<ProjectImages> builder)
+        public void Configure(EntityTypeBuilder<ProjectImage> builder)
         {
+            builder.ToTable("ProjectImages");
+
             builder.Property(e => e.Caption)
                     .IsRequired()
                     .HasMaxLength(100)

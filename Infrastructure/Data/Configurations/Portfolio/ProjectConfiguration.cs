@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Configurations.Portfolio
 {
-    public class ProjectsConfiguration : IEntityTypeConfiguration<Projects>
+    public class ProjectConfiguration : IEntityTypeConfiguration<Project>
     {
-        public void Configure(EntityTypeBuilder<Projects> builder)
+        public void Configure(EntityTypeBuilder<Project> builder)
         {
+            builder.ToTable("Projects");
+
             builder.Property(e => e.AddedOn).HasColumnType("datetime");
 
             builder.Property(e => e.Description).IsUnicode(false);

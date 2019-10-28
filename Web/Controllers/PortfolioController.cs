@@ -7,10 +7,10 @@ namespace Web.Controllers
 {
     public class PortfolioController : ApiControllerBase
     {
-        private readonly IEfRepository<Projects> _projectRepository;
+        private readonly IEfRepository<Project> _projectRepository;
         private readonly IMapper _mapper;
 
-        public PortfolioController(IEfRepository<Projects> projectRepository, IMapper mapper)
+        public PortfolioController(IEfRepository<Project> projectRepository, IMapper mapper)
         {
             _projectRepository = projectRepository;
             _mapper = mapper;
