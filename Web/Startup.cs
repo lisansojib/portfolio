@@ -22,6 +22,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using AutoMapper;
 using Web.Mapping;
+using ApplicationCore.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
+using Web.Extensions;
 
 namespace Web
 {
@@ -49,6 +52,24 @@ namespace Web
             // https://www.microsoft.com/en-us/download/details.aspx?id=54284
             services.AddDbContext<AppDbContext>(c =>
                 c.UseSqlServer(Configuration.GetConnectionString("DbConnection")));
+
+            services.AddIdentity<AppUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddIdentityServer().AddDeveloperSigningCredential()
+                // this adds the operational data from DB (codes, tokens, consents)
+                .AddOperationalStore(options =>
+                {
+                    options.ConfigureDbContext = builder => builder.UseSqlServer(Configuration.GetConnectionString("DbConnection"));
+                // this enables automatic token cleanup. this is optional.
+                options.EnableTokenCleanup = true;
+                    options.TokenCleanupInterval = 30; // interval in seconds
+                })
+                .AddInMemoryIdentityResources(AuthConfig.GetIdentityResources())
+                .AddInMemoryApiResources(AuthConfig.GetApiResources())
+                .AddInMemoryClients(AuthConfig.GetClients())
+                .AddAspNetIdentity<AppUser>();
 
             ConfigureServices(services);
         }
@@ -126,6 +147,8 @@ namespace Web
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            app.UseIdentityServer();
 
             app.UseHttpsRedirection();
 
