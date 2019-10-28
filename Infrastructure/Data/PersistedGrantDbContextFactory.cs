@@ -11,7 +11,7 @@ namespace Infrastructure.Data
         public PersistedGrantDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<PersistedGrantDbContext>();
-            optionsBuilder.UseSqlServer("Server=192.168.10.198;Integrated Security=false;User Id=sa; Password=sa123;Initial Catalog=Portfolio;MultipleActiveResultSets=true",
+            optionsBuilder.UseSqlServer("Server=DESKTOP-8NUIL2D;Integrated Security=false;User Id=sa; Password=Aa12345^;Initial Catalog=Portfolio;MultipleActiveResultSets=true",
                 sql => {
                     sql.MigrationsAssembly(typeof(PersistedGrantDbContextFactory).GetTypeInfo().Assembly.GetName().Name);
                     sql.MigrationsHistoryTable("_IdentityPersistedGrantMigrationHistory");

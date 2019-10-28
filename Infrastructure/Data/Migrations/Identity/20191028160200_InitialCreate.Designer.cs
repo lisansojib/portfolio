@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations.Identity
 {
     [DbContext(typeof(PersistedGrantDbContext))]
-    [Migration("20191028111256_InitialCreate")]
+    [Migration("20191028160200_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
