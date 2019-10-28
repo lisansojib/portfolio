@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Configurations.Portfolio
 {
-    public class ProjectClientsConfiguration : IEntityTypeConfiguration<ProjectClients>
+    public class ProjectClientsConfiguration : IEntityTypeConfiguration<ProjectClient>
     {
-        public void Configure(EntityTypeBuilder<ProjectClients> builder)
+        public void Configure(EntityTypeBuilder<ProjectClient> builder)
         {
+            builder.ToTable("ProjectClients");
+
             builder.Property(e => e.Description)
                 .HasMaxLength(500)
                 .IsUnicode(false);
