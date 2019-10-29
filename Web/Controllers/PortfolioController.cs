@@ -13,6 +13,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
 using Web.Filters;
 using Web.Utilities;
+using Web.Models;
+using System.Collections.Generic;
 
 namespace Web.Controllers
 {
@@ -22,6 +24,8 @@ namespace Web.Controllers
         private readonly IMapper _mapper;
         private readonly long _fileSizeLimit;
         private readonly ILogger<PortfolioController> _logger;
+        private readonly ICommonHelpers _commonHelpers;
+
         private readonly string[] _permittedExtensions = { ".txt" };
         private readonly string _targetFilePath;
 
@@ -32,11 +36,13 @@ namespace Web.Controllers
         public PortfolioController(IEfRepository<Project> projectRepository
             , ILogger<PortfolioController> logger
             , IMapper mapper
-            , IConfiguration config)
+            , IConfiguration config
+            , ICommonHelpers commonHelpers)
         {
             _projectRepository = projectRepository;
             _logger = logger;
             _mapper = mapper;
+            _commonHelpers = commonHelpers;
 
             _fileSizeLimit = config.GetValue<long>("FileSizeLimit");
 
@@ -45,10 +51,23 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get(int offset = 0, int limit = 10, string filter = null, string sort = null, string order = null)
         {
-            var response = new string[] { "Hello", "World" };
+            var filterBy = _commonHelpers.GetFilterByModel(filter);
+            var records = _projectRepository.ListAll(offset, limit, filterBy, sort, order, out int count);
+            var data = _mapper.Map<List<ProjectViewModel>>(records);
+            var response = new TableResponseModel(count, data);
+
             return Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Get(int id)
+        {
+            var entity = await _projectRepository.GetByIdAsync(id);
+            var model = _mapper.Map<ProjectViewModel>(entity);
+
+            return Ok(model);
         }
 
         [HttpPost]

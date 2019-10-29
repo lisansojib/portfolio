@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using ApplicationCore.Entities.Portfolio;
+using AutoMapper;
+using Web.Models;
 
 namespace Web.Mapping
 {
@@ -6,7 +8,9 @@ namespace Web.Mapping
     {
         public DomainToViewModelMappingProfile()
         {
-
+            CreateMap<ProjectClient, ProjectClientVeiwModel>();
+            CreateMap<ProjectImage, ProjectImageViewModel>();
+            CreateMap<Project, ProjectViewModel>();
         }
     }
 }

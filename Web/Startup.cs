@@ -25,6 +25,7 @@ using Web.Mapping;
 using ApplicationCore.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Web.Extensions;
+using Web.Utilities;
 
 namespace Web
 {
@@ -82,11 +83,14 @@ namespace Web
             services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
 
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+
             services.AddTransient<IEmailSender, EmailSender>();
 
             services.AddMemoryCache();
 
             services.AddAutoMapper(typeof(DomainToViewModelMappingProfile), typeof(ViewModelToDomainMappingProfile));
+
+            services.AddScoped<ICommonHelpers, CommonHelpers>();
 
             services.AddControllers();
 
