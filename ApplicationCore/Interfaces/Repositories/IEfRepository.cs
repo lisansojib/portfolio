@@ -45,7 +45,7 @@ namespace ApplicationCore.Interfaces.Repositories
         /// ListAll
         /// </summary>
         /// <returns></returns>
-        IQueryable<T> ListAll();
+        List<T> ListAll();
 
         /// <summary>
         /// ListAll

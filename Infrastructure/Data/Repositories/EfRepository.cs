@@ -67,9 +67,9 @@ namespace Infrastructure.Data.Repositories
             return await _dbSet.CountAsync();
         }
 
-        public IQueryable<T> ListAll()
+        public List<T> ListAll()
         {
-            return _dbSet.AsQueryable();
+            return _dbSet.ToList();
         }
 
         public async Task<List<T>> ListAllAsync()
