@@ -26,6 +26,7 @@ using ApplicationCore.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Web.Extensions;
 using Web.Utilities;
+using Web.Filters;
 
 namespace Web
 {

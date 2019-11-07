@@ -23,6 +23,13 @@ namespace Infrastructure.Data.Configurations.Portfolio
                 .HasMaxLength(256)
                 .IsUnicode(false);
 
+            builder.Property(e => e.Languages)
+                .HasMaxLength(500);
+
+            builder.Property(e => e.Status)
+                .HasMaxLength(50)
+                .IsRequired();
+
             builder.Property(e => e.Tools)
                 .HasMaxLength(500)
                 .IsUnicode(false);

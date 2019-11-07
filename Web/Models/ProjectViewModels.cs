@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Web.Models
 {
@@ -14,6 +15,9 @@ namespace Web.Models
         public string Description { get; set; }
         public string Libraries { get; set; }
         public string Tools { get; set; }
+        public DateTime StartedOn { get; set; }
+        public string Status { get; set; }
+        public DateTime? CompletedOn { get; set; }
 
         public List<ProjectClientVeiwModel> ProjectClients { get; set; }
         public List<ProjectImageViewModel> ProjectImages { get; set; }

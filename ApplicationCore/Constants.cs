@@ -6,4 +6,10 @@
 
         public const string Consumer = "consumer";
     }
+
+    public static class ProjectStatusConstants
+    {
+        public const string ONGOING = "On going";
+        public const string COMPLETED = "Completed";
+    }
 }
