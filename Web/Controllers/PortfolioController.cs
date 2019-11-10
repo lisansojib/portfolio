@@ -1,52 +1,47 @@
 ﻿using ApplicationCore.Entities.Portfolio;
 using ApplicationCore.Interfaces.Repositories;
 using AutoMapper;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Net.Http.Headers;
 using Web.Utilities;
 using Web.Models;
 using System.Collections.Generic;
+using Web.Extensions.Filters;
+using ApplicationCore;
+using Infrastructure.Services;
+using System;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Web.Controllers
 {
+    //[Authorize]
     public class PortfolioController : ApiControllerBase
     {
         private readonly IEfRepository<Project> _projectRepository;
         private readonly IMapper _mapper;
-        private readonly long _fileSizeLimit;
         private readonly ILogger<PortfolioController> _logger;
         private readonly ICommonHelpers _commonHelpers;
-
-        private readonly string[] _permittedExtensions = { ".txt" };
-        private readonly string _targetFilePath;
-
-        // Get the default form options so that we can use them to set the default 
-        // limits for request body data.
-        private static readonly FormOptions _defaultFormOptions = new FormOptions();
+        private readonly IFormFileProcessor _formFileProcessor;
+        //private readonly IdentityClaimsProfileService _identityService;
 
         public PortfolioController(IEfRepository<Project> projectRepository
             , ILogger<PortfolioController> logger
             , IMapper mapper
-            , IConfiguration config
-            , ICommonHelpers commonHelpers)
+            , ICommonHelpers commonHelpers
+            , IFormFileProcessor formFileProcessor
+            //, IdentityClaimsProfileService identityService
+            )
         {
             _projectRepository = projectRepository;
             _logger = logger;
             _mapper = mapper;
             _commonHelpers = commonHelpers;
-
-            _fileSizeLimit = config.GetValue<long>("FileSizeLimit");
-
-            // To save physical files to a path provided by configuration:
-            _targetFilePath = config.GetValue<string>("StoredFilesPath");
+            _formFileProcessor = formFileProcessor;
+            //_identityService = identityService;
         }
 
         [HttpGet]
@@ -71,140 +66,120 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        //[DisableFormValueModelBinding]
-        //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> PostAsync()
+        [ValidateMultipleFormData]
+        public async Task<IActionResult> SaveAsync([FromForm]ProjectBindingModel model)
         {
-            if (!MultipartRequestHelper.IsMultipartContentType(Request.ContentType))
+            Project entity;
+            //var userId = await _identityService.GetUserIdAsync(User.Identity.Name);
+
+            if (model.IsModified)
             {
-                ModelState.AddModelError("File",
-                    $"The request couldn't be processed (Error 1).");
-                // Log error
+                entity = await _projectRepository.GetByIdAsync(model.Id);
+                entity.Title = model.Title;
+                entity.Description = model.Description;
+                entity.Languages = model.Languages;
+                entity.Libraries = model.Libraries;
+                entity.Tools = model.Tools;
+                entity.StartedOn = model.StartedOn;
+                entity.Status = model.Status;
+                entity.CompletedOn = model.CompletedOn;
+                //entity.UpdatedBy = userId;
+                entity.UpdatedOn = DateTime.Now;
+                entity.EntityState = EntityState.Modified;
 
-                return BadRequest(ModelState);
-            }
+                foreach (var item in entity.ProjectClients)
+                    item.EntityState = EntityState.Unchanged;
 
-            var boundary = MultipartRequestHelper.GetBoundary(
-                MediaTypeHeaderValue.Parse(Request.ContentType),
-                _defaultFormOptions.MultipartBoundaryLengthLimit);
-            var reader = new MultipartReader(boundary, HttpContext.Request.Body);
-            var section = await reader.ReadNextSectionAsync();
+                foreach (var item in entity.ProjectImages)
+                    item.EntityState = EntityState.Unchanged;
 
-            while (section != null)
-            {
-                var hasContentDispositionHeader = ContentDispositionHeaderValue.TryParse(section.ContentDisposition, out var contentDisposition);
-
-                if (hasContentDispositionHeader)
+                ProjectClient projectClientEntity;
+                foreach(var item in model.ProjectClients)
                 {
-                    // This check assumes that there's a file
-                    // present without form data. If form data
-                    // is present, this method immediately fails
-                    // and returns the model error.
-                    if (!MultipartRequestHelper.HasFileContentDisposition(contentDisposition))
+                    projectClientEntity = entity.ProjectClients.FirstOrDefault(x => x.Name == item.Name && x.Email == item.Email && x.Organization == item.Organization);
+                    if(projectClientEntity == null)
                     {
-                        return BadRequest($"The request couldn't be processed (Error 2).");
+                        projectClientEntity = new ProjectClient
+                        {
+                            Name = item.Name,
+                            Email = item.Email,
+                            Organization = item.Organization,
+                            Description = item.Description
+                        };
+
+                        entity.ProjectClients.Add(projectClientEntity);
                     }
                     else
                     {
-                        // Don't trust the file name sent by the client. To display
-                        // the file name, HTML-encode the value.
-                        var trustedFileNameForDisplay = WebUtility.HtmlEncode(contentDisposition.FileName.Value);
-                        var trustedFileNameForFileStorage = Path.GetRandomFileName();
-
-                        // **WARNING!**
-                        // In the following example, the file is saved without
-                        // scanning the file's contents. In most production
-                        // scenarios, an anti-virus/anti-malware scanner API
-                        // is used on the file before making the file available
-                        // for download or for use by other systems. 
-                        // For more information, see the topic that accompanies 
-                        // this sample.
-
-                        var streamedFileContent = await FileHelpers.ProcessStreamedFile(section, contentDisposition, ModelState, _permittedExtensions, _fileSizeLimit);
-
-                        using var targetStream = System.IO.File.Create(Path.Combine(_targetFilePath, trustedFileNameForFileStorage));
-                        await targetStream.WriteAsync(streamedFileContent);
-
-                        _logger.LogInformation("Uploaded file '{TrustedFileNameForDisplay}' saved to '{TargetFilePath}' as {TrustedFileNameForFileStorage}",
-                            trustedFileNameForDisplay, _targetFilePath,trustedFileNameForFileStorage);
+                        projectClientEntity.Name = item.Name;
+                        projectClientEntity.Email = item.Email;
+                        projectClientEntity.Organization = item.Organization;
+                        projectClientEntity.Description = item.Description;
+                        projectClientEntity.EntityState = EntityState.Modified;
                     }
                 }
 
-                // Drain any remaining section body that hasn't been consumed and
-                // read the headers for the next section.
-                section = await reader.ReadNextSectionAsync();
+                await _projectRepository.UpdateAsync(entity);
+            }
+            else
+            {
+                entity = _mapper.Map<Project>(model);
+                //entity.AddedBy = userId;
+
+                var directory = Path.Combine(FileSavePaths.UploadPath, Path.GetRandomFileName());
+                Directory.CreateDirectory(directory);
+
+                ProjectImage projectImageEntity;
+                string trustedFileNameForFileStorage;
+                foreach (var item in model.ProjectImages)
+                {
+                    trustedFileNameForFileStorage = Path.GetRandomFileName();
+
+                    projectImageEntity = new ProjectImage
+                    {
+                        Caption = WebUtility.HtmlEncode(item.Image.FileName),
+                        Path = Path.Combine(directory, trustedFileNameForFileStorage),
+                        IsPrimary = item.IsPrimary
+                    };
+
+                    var streamedFileContent = await _formFileProcessor.ProcessFormFile<ProjectImageBindingModel>(item.Image, ModelState, PermittedFileExtensions.ImageExtensions);
+                    using var targetStream = System.IO.File.Create(projectImageEntity.Path);
+                    await targetStream.WriteAsync(streamedFileContent);
+
+                    _logger.LogInformation($"Uploaded file '{projectImageEntity.Caption}' saved to '{projectImageEntity.Path}' as {trustedFileNameForFileStorage}");
+
+                    entity.ProjectImages.Add(projectImageEntity);
+                }
+
+                await _projectRepository.AddAsync(entity);
             }
 
-            return Created(nameof(PortfolioController), null);
+            return Ok();
         }
 
-        [Route("projectimage")]
         [HttpPost]
-        //[DisableFormValueModelBinding]
-        //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadProjectImagesAsync()
+        [ValidateMultipleFormData]
+        [Route("projectimage")]
+        public async Task<IActionResult> PostProjectFile([FromForm]ProjectImageBindingModel model)
         {
-            if (!MultipartRequestHelper.IsMultipartContentType(Request.ContentType))
+            var trustedFileNameForFileStorage = Guid.NewGuid().ToString();
+            var directory = $@"{FileSavePaths.UploadPath}/{Guid.NewGuid().ToString()}";
+            Directory.CreateDirectory(directory);
+
+            var projectImageEntity = new ProjectImage
             {
-                ModelState.AddModelError("File",
-                    $"The request couldn't be processed (Error 1).");
-                // Log error
+                Caption = WebUtility.HtmlEncode(model.Image.FileName),
+                Path = $@"{directory}/{trustedFileNameForFileStorage}{Path.GetExtension(model.Image.FileName)}",
+                IsPrimary = model.IsPrimary
+            };
 
-                return BadRequest(ModelState);
-            }
+            var streamedFileContent = await _formFileProcessor.ProcessFormFile<ProjectImageBindingModel>(model.Image, ModelState, PermittedFileExtensions.ImageExtensions);
+            using var targetStream = System.IO.File.Create(projectImageEntity.Path);
+            await targetStream.WriteAsync(streamedFileContent);
 
-            var boundary = MultipartRequestHelper.GetBoundary(
-                MediaTypeHeaderValue.Parse(Request.ContentType),
-                _defaultFormOptions.MultipartBoundaryLengthLimit);
-            var reader = new MultipartReader(boundary, HttpContext.Request.Body);
-            var section = await reader.ReadNextSectionAsync();
+            _logger.LogInformation($"Uploaded file '{projectImageEntity.Caption}' saved to '{projectImageEntity.Path}' as {trustedFileNameForFileStorage}");
 
-            while (section != null)
-            {
-                var hasContentDispositionHeader = ContentDispositionHeaderValue.TryParse(section.ContentDisposition, out var contentDisposition);
-
-                if (hasContentDispositionHeader)
-                {
-                    // This check assumes that there's a file
-                    // present without form data. If form data
-                    // is present, this method immediately fails
-                    // and returns the model error.
-                    if (!MultipartRequestHelper.HasFileContentDisposition(contentDisposition))
-                    {
-                        return BadRequest($"The request couldn't be processed (Error 2).");
-                    }
-                    else
-                    {
-                        // Don't trust the file name sent by the client. To display
-                        // the file name, HTML-encode the value.
-                        var trustedFileNameForDisplay = WebUtility.HtmlEncode(contentDisposition.FileName.Value);
-                        var trustedFileNameForFileStorage = Path.GetRandomFileName();
-
-                        // **WARNING!**
-                        // In the following example, the file is saved without
-                        // scanning the file's contents. In most production
-                        // scenarios, an anti-virus/anti-malware scanner API
-                        // is used on the file before making the file available
-                        // for download or for use by other systems. 
-                        // For more information, see the topic that accompanies 
-                        // this sample.
-
-                        var streamedFileContent = await FileHelpers.ProcessStreamedFile(section, contentDisposition, ModelState, _permittedExtensions, _fileSizeLimit);
-
-                        using var targetStream = System.IO.File.Create(Path.Combine(_targetFilePath, trustedFileNameForFileStorage));
-                        await targetStream.WriteAsync(streamedFileContent);
-
-                        _logger.LogInformation("Uploaded file '{TrustedFileNameForDisplay}' saved to '{TargetFilePath}' as {TrustedFileNameForFileStorage}",
-                            trustedFileNameForDisplay, _targetFilePath, trustedFileNameForFileStorage);
-                    }
-                }
-
-                // Drain any remaining section body that hasn't been consumed and
-                // read the headers for the next section.
-                section = await reader.ReadNextSectionAsync();
-            }
-
-            return Created(nameof(PortfolioController), null);
+            return Ok();
         }
     }
 }

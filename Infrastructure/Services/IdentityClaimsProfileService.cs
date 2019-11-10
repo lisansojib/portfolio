@@ -23,6 +23,12 @@ namespace Infrastructure.Services
             _claimsFactory = claimsFactory;
         }
 
+        public async Task<string> GetUserIdAsync(string username)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            return user.Id;
+        }
+
         public async Task GetProfileDataAsync(ProfileDataRequestContext context)
         {
             var sub = context.Subject.GetSubjectId();

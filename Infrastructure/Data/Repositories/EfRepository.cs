@@ -210,7 +210,7 @@ namespace Infrastructure.Data.Repositories
             return entity;
         }
 
-        public async Task<T> AddAsync(T entity, string tableName)
+        public async Task<T> AddAsync(T entity)
         {
             _dbSet.Add(entity);
             await _dbContext.SaveChangesAsync();

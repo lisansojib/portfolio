@@ -81,9 +81,11 @@ namespace Web
         {
             ConfigureCookieSettings(services);
 
-            services.AddScoped(typeof(IEfRepository<>), typeof(EfRepository<>));
+            services.AddTransient(typeof(IEfRepository<>), typeof(EfRepository<>));
 
-            services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+            services.AddScoped(typeof(IdentityClaimsProfileService));
+
+            services.AddSingleton(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
 
             services.AddTransient<IEmailSender, EmailSender>();
 
@@ -93,7 +95,15 @@ namespace Web
 
             services.AddScoped<ICommonHelpers, CommonHelpers>();
 
+            services.AddScoped<IFormFileProcessor, FormFileProcessor>();
+
             services.AddControllers();
+
+            services.AddMvc(opt =>
+            {
+                opt.Filters.Add(typeof(DisableFormValueModelBindingAttribute));
+                opt.Filters.Add(typeof(DisableFormValueModelBindingAttribute));
+            });
 
             // Register the Swagger generator, defining 1 or more Swagger documents
             services.AddSwaggerGen(c =>

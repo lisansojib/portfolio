@@ -33,10 +33,6 @@ namespace Infrastructure.Data.Configurations.Portfolio
             builder.Property(e => e.Tools)
                 .HasMaxLength(500)
                 .IsUnicode(false);
-
-            builder.Property(e => e.UpdatedBy).HasColumnType("datetime");
-
-            builder.Property(e => e.UpdatedOn).HasColumnType("datetime");
         }
     }
 }

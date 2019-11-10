@@ -163,9 +163,8 @@ namespace ApplicationCore.Interfaces.Repositories
         /// AddAsync
         /// </summary>
         /// <param name="entity">Entity Value</param>
-        /// <param name="tableName">Table Name</param>
         /// <returns></returns>
-        Task<T> AddAsync(T entity, string tableName);
+        Task<T> AddAsync(T entity);
 
         /// <summary>
         /// UpdateAsync

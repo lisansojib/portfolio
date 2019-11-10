@@ -9,6 +9,12 @@
     <Compile Remove="Data\Migrations\20191028110807_InitialCreate.Designer.cs" />
     <Compile Remove="Data\Migrations\20191028110935_InitialCreate.cs" />
     <Compile Remove="Data\Migrations\20191028110935_InitialCreate.Designer.cs" />
+    <Compile Remove="Data\Migrations\20191110174530_UpdatedByUpdated.cs" />
+    <Compile Remove="Data\Migrations\20191110174530_UpdatedByUpdated.Designer.cs" />
+    <Compile Remove="Data\Migrations\20191110174824_UpdatedByUpdated.cs" />
+    <Compile Remove="Data\Migrations\20191110174824_UpdatedByUpdated.Designer.cs" />
+    <Compile Remove="Data\Migrations\20191110175106_UpdatedByUpdated.cs" />
+    <Compile Remove="Data\Migrations\20191110175106_UpdatedByUpdated.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +37,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ApplicationCore\ApplicationCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Migrations\Identity\" />
   </ItemGroup>
 
 </Project>

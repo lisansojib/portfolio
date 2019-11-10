@@ -12,4 +12,14 @@
         public const string ONGOING = "On going";
         public const string COMPLETED = "Completed";
     }
+
+    public static class PermittedFileExtensions
+    {
+        public static string[] ImageExtensions = { ".png", ".jpeg", ".jpg" };
+    }
+
+    public static class FileSavePaths
+    {
+        public const string UploadPath = "Uploads";
+    }
 }

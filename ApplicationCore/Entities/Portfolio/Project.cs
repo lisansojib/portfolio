@@ -20,10 +20,11 @@ namespace ApplicationCore.Entities.Portfolio
         public DateTime StartedOn { get; set; }
         public string Status { get; set; }
         public DateTime? CompletedOn { get; set; }
+        public int SortOrder { get; set; }
         public DateTime AddedOn { get; set; }
-        public int AddedBy { get; set; }
+        public string AddedBy { get; set; }
         public DateTime? UpdatedOn { get; set; }
-        public DateTime? UpdatedBy { get; set; }
+        public string UpdatedBy { get; set; }
 
         public virtual ICollection<ProjectClient> ProjectClients { get; set; }
         public virtual ICollection<ProjectImage> ProjectImages { get; set; }
